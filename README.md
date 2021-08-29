@@ -8,7 +8,7 @@ To compile it, use:
 g++ main.cpp -O3 -pthread -o main.bin
 ```
 
-GCC has a bug that, for the code related to execution in memory to work properly, you need to add a optimization directive such as -O3. This is not an issue when compiling with Clang. Also, the -pthread flag is required to link the multithreading library. You may also want to add -Wall and -g flags to improve debugging experience.
+GCC has a bug that for the code related to execution in memory to work properly, you need to add a optimization directive such as -O3. This is not an issue when compiling with Clang. Also, the -pthread flag is required to link the multithreading library. You may also want to add -Wall and -g flags to improve debugging experience.
 
 To run it, use:
 
@@ -41,11 +41,11 @@ The flow of the code is as follows:
 
 Following there is a list with some problems and their solutions, so it may help in the understanding of the code:
 
-1.  Instruction sizes
+1.  Instruction sizes:
     A map was created with hardcoded sizes of the instructions existing in the input code. This is far from ideal, but we figured that a "x86 assembler" would be a project itself. If you wish to do it the correct way, you would only need to replace the **getSizeOfInstruction()** function.
     Nevertheless, a tool that can do just that can be found at [Defuse](https://defuse.ca/) online-x64-assembler.
 
-2.  Instructions to add
+2.  Instructions to add:
     Using Defuse online assembler already mentioned to decipher them and an awesome [online instruction reference](https://www.felixcloutier.com/x86/index.html), the following instructions were added to the gene pool:
 
         |          Instructions         |
@@ -59,10 +59,10 @@ Following there is a list with some problems and their solutions, so it may help
         | add reg, im32 | or reg, im32  |
         |               | clc           |
 
-3.  Program loop
+3.  Program loop:
     A watcher thread was required because a program does not know whether it is in loop or just taking a long time. So a _timeout_ value based in some heuristic was placed.
 
-4.  Thread Cancellation
+4.  Thread Cancellation:
     Firstly, we approached the problem using **pthread_cond_timedwait()**, for a thread would wait a condition or a timeout. But this approach proved too slow (probably due to thread synchronization) so we shifted to a verifying loop with clock()/time(). Another problem was that if the thread was in a tight loop, with no cancellation points, it could not answer a pthread_cancel() command since the default cancellation mode is of type "deferred". So we changed to asynchronous cancel, meaning that it could be cancelled at any time. This brought yet another problem, as it can (and did) leave some structures in a inconsistent state. The solution was to allocate most of what was needed outside and pass only the references to the thread.
 
 5.  SIGFPE
